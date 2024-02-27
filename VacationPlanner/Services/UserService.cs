@@ -1,46 +1,71 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VacationPlanner.Models;
+using Microsoft.AspNetCore.Identity;
 
+public interface IUserService
+{
+    Task<User> Authenticate(string username, string password);
+    Task<User> Register(string username, string email, string password);
+    // ... other methods
+}
 
-    public interface IUserService
+public class UserService : IUserService
+{
+    private readonly VacationPlannerContext _context;
+    private readonly IPasswordHasher<User> _passwordHasher;
+
+    public UserService(VacationPlannerContext context, IPasswordHasher<User> passwordHasher)
     {
-        Task<User> Authenticate(string username, string password);
-        
+        _context = context;
+        _passwordHasher = passwordHasher;
     }
 
-    public class UserService : IUserService
+    public async Task<User> Authenticate(string username, string password)
     {
-        private readonly VacationPlannerContext _context;
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Name == username);
 
-        public UserService(VacationPlannerContext context)
+        if (user != null)
         {
-            _context = context;
-        }
-
-        public async Task<User> Authenticate(string username, string password)
-        {
-
-            // Retrieve the user by username
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Name == username);
-
-
-            if (user == null || !VerifyPasswordHash(password, user.Password))
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            if (result == PasswordVerificationResult.Success)
             {
-                // Authentication failed
-                return null;
+                return user; // Authentication successful
             }
-
-            // Authentication successful
-            return user;
         }
 
-        private bool VerifyPasswordHash(string providedPassword, byte[] storedHash)
-        {
-            // Password code here
-            throw new NotImplementedException();
-        }
+        return null; // Authentication failed
     }
 
+
+    public IPasswordHasher<User> Get_passwordHasher()
+    {
+        return _passwordHasher;
+    }
+
+    public async Task<User> Register(string username, string email, string password)
+    {
+        if (await _context.Users.AnyAsync(u => u.Name == username))
+        {
+            throw new Exception("Username is already taken");
+        }
+
+        var user = new User
+        {
+            Name = username,
+            Email = email,
+            Role = "User" // Default role; adjust as necessary.
+        };
+
+        // Hashing the password
+        user.PasswordHash = _passwordHasher.HashPassword(user, password);
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return user;
+    }
+
+
+}

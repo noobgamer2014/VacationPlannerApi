@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VacationPlanner.Models;
 
@@ -11,9 +12,10 @@ using VacationPlanner.Models;
 namespace VacationPlanner.Migrations
 {
     [DbContext(typeof(VacationPlannerContext))]
-    partial class VacationPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20240227095521_RemovePasswordSalt")]
+    partial class RemovePasswordSalt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

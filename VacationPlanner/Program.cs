@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using VacationPlanner.Services;
 using VacationPlanner.Models;
-
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +25,7 @@ builder.Services.AddDbContext<VacationPlannerContext>(options =>
 
 // Add the user service for dependency injection
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 // Register other services like mailing service if you have any
 //builder.Services.AddScoped<IMailingService, MailingService>();
 

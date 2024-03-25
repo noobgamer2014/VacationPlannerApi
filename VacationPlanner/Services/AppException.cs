@@ -18,4 +18,11 @@ internal class AppException : Exception
     protected AppException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
     }
+
+    public AppException(string message, int errorCode) : base(message)
+    {
+        this.ErrorCode = errorCode;
+    }
+
+    public int ErrorCode { get; set; }
 }

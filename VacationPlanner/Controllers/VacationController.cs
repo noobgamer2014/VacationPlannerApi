@@ -1,104 +1,67 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using VacationPlanner.Services;
 using VacationPlanner.Models;
-
+using System.Text.Json.Nodes;
+using Newtonsoft.Json.Linq;
+using System.Security.Claims;
+using Realms.Sync;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace VacationPlanner.Controllers
 {
     [ApiController]
-    [Route("/vacation")]
+    [Route("[controller]")]
     public class VacationController : ControllerBase
     {
-        private readonly VacationPlannerContext _context;
+        private readonly IVacationService _vacationService;
 
-        public VacationController(VacationPlannerContext context)
+        public VacationController(IVacationService vacationService)
         {
-            _context = context;
+            _vacationService = vacationService;
         }
 
-        // GET: /vacation
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Vacation>>> GetVacations()
+        // Retrieve the current user ID from the User claims
+        private int GetCurrentUserId()
         {
-            return await _context.Vacations.Include(v => v.User).ToListAsync();
-        }
-
-        // GET: /vacation/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Vacation>> GetVacation(int id)
-        {
-            var vacation = await _context.Vacations.Include(v => v.User).FirstOrDefaultAsync(v => v.Id == id);
-
-            if (vacation == null)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
             {
-                return NotFound();
+                throw new InvalidOperationException("User ID claim not found or is empty.");
             }
 
-            return vacation;
+            return int.Parse(userIdClaim);
         }
 
-        // POST: /vacation
-        [HttpPost]
-        public async Task<ActionResult<Vacation>> PostVacation(Vacation vacation)
+        [HttpGet("leftoverDays")]
+        [Authorize]
+        public ActionResult<int> GetLeftoverDays()
         {
-            _context.Vacations.Add(vacation);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetVacation), new { id = vacation.Id }, vacation);
+            var userId = GetCurrentUserId(); 
+            var daysLeft = _vacationService.GetLeftoverDays(userId);
+            return Ok(daysLeft);
         }
 
-        // PUT: /vacation/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVacation(int id, Vacation vacation)
+        // GET: api/vacation/recentVacations/{userId}
+        [HttpGet("recentVacations")]
+        [Authorize]
+        public ActionResult<IEnumerable<VacationRequestDTO>> GetRecentVacations()
         {
-            if (id != vacation.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(vacation).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var userId = GetCurrentUserId();
+                var recentVacations = _vacationService.GetRecentVacations(userId);
+                return Ok(recentVacations);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (System.Exception ex)
             {
-                if (!VacationExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                // Handle the exception appropriately
+                return StatusCode(500, "Internal server error: " + ex.Message);
             }
-
-            return NoContent();
         }
 
-        // DELETE: /vacation/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVacation(int id)
-        {
-            var vacation = await _context.Vacations.FindAsync(id);
-            if (vacation == null)
-            {
-                return NotFound();
-            }
-
-            _context.Vacations.Remove(vacation);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool VacationExists(int id)
-        {
-            return _context.Vacations.Any(e => e.Id == id);
-        }
+        
     }
 }

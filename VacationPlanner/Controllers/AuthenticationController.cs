@@ -2,6 +2,7 @@
 using VacationPlanner.Models;
 using VacationPlanner.Services;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace VacationPlanner.Controllers
 {
@@ -19,19 +20,17 @@ namespace VacationPlanner.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            var user = await _userService.Authenticate(model.Username, model.Password);
+            var (user, token) = await _userService.Authenticate(model.Username, model.Password);
 
-            if (user == null)
+            if (user == null || string.IsNullOrEmpty(token))
                 return BadRequest(new { message = "Username or password is incorrect" });
-
-            // Generate JWT token, map to DTO, etc., and return as part of the response
 
             return Ok(new
             {
                 Id = user.Id,
                 Username = user.Name,
                 Email = user.Email,
-                Token = "fake-jwt-token" // You should replace this with an actual JWT token
+                Token = token
             });
         }
 

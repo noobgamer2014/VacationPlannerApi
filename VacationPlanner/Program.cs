@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using VacationPlanner.Services;
 using VacationPlanner.Models;
 using Microsoft.AspNetCore.Identity;
+using VacationPlanner.Controllers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +23,24 @@ builder.Services.AddCors(options =>
                    .AllowAnyMethod();
         });
 });
+
+// Token creator
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+
+builder.Services.AddScoped<TokenService>();
 // Register the DbContext with a connection string from your configuration (appsettings.json)
 builder.Services.AddDbContext<VacationPlannerContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("VacationPlannerDatabase")));
@@ -26,9 +48,12 @@ builder.Services.AddDbContext<VacationPlannerContext>(options =>
 // Add the user service for dependency injection
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IVacationService, VacationService>();
 // Register other services like mailing service if you have any
 //builder.Services.AddScoped<IMailingService, MailingService>();
-
+builder.Services.AddHttpClient();
+builder.Services.AddTransient<AuthenticationController>();
+builder.Services.AddTransient<VacationController>();
 
 // Add controllers (assuming you're using MVC)
 builder.Services.AddControllers();

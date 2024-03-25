@@ -14,7 +14,7 @@ namespace VacationPlanner.Models
         public string Email { get; set; }
         public int Superior { get; set; }
         public int Appartment { get; set; } // "Entwicklung(1)" or "QS(2)" or "Support(3)"
-        public double MaxVacationDays { get; set; }
+        public int VacationDays { get; set; }
         public virtual ICollection<Vacation> Vacations { get; set; }
 
         

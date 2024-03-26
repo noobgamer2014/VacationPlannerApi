@@ -10,7 +10,7 @@
     public interface IVacationService
     {
         double GetLeftoverDays(double userId);
-        void AddVacationRequest(Vacation vacationRequest);
+        Task AddVacationRequest(Vacation vacation);
         IEnumerable<VacationRequestDTO> GetRecentVacations(int userId);
         IEnumerable<VacationRequestDTO> GetAllVacationRequests();
     }
@@ -26,9 +26,9 @@
             
         }
 
-        public void AddVacationRequest(Vacation vacationRequest)
+        public async Task AddVacationRequest(Vacation vacation)
         {
-            _context.Vacations.Add(vacationRequest);
+            _context.Vacations.Add(vacation);
             _context.SaveChanges();
         }
 
@@ -69,5 +69,6 @@
                            })
                            .ToList();
         }
+        
     }
 }

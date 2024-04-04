@@ -13,6 +13,7 @@
         Task AddVacationRequest(Vacation vacation);
         IEnumerable<VacationRequestDTO> GetRecentVacations(int userId);
         IEnumerable<VacationRequestDTO> GetAllVacationRequests();
+        Task<IEnumerable<VacationRequestDTO>> GetVacationsAsync(double userId,int? statusId, DateTime? startDate, DateTime? endDate);
     }
 
     public class VacationService : IVacationService
@@ -35,6 +36,46 @@
         public IEnumerable<VacationRequestDTO> GetAllVacationRequests()
         {
             return (IEnumerable<VacationRequestDTO>)_context.Vacations.ToList();
+        }
+
+        public async Task<IEnumerable<VacationRequestDTO>> GetVacationsAsync(double userId, int? statusId, DateTime? startDate, DateTime? endDate)
+        {
+            
+            
+            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+            if (!userExists)
+            {
+                throw new ArgumentException("User not found", nameof(userId));
+            }
+
+            var query = _context.Vacations.Where(v => v.UserId == userId);
+
+            // Apply additional filters if provided.
+            if (statusId.HasValue)
+            {
+                query = query.Where(v => v.StatusId == statusId.Value);
+            }
+            if (startDate.HasValue)
+            {
+                query = query.Where(v => v.StartDate >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                query = query.Where(v => v.EndDate <= endDate.Value);
+            }
+
+            // Project the result to a DTO to avoid sending entity models directly.
+            var vacationRequests = await query.Select(v => new VacationRequestDTO
+            {
+                Id = v.Id,
+                UserId = v.UserId,
+                StartDate = v.StartDate,
+                EndDate = v.EndDate,
+                StatusId = v.StatusId,
+                VacDays = v.VacDays
+            }).ToListAsync();
+
+            return vacationRequests;
         }
 
         public double GetLeftoverDays(double userId)

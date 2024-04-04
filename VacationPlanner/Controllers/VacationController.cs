@@ -38,7 +38,7 @@ namespace VacationPlanner.Controllers
         }
 
         [HttpPost("requestVacation")]
-        public async Task<IActionResult> RequestVacation([FromBody] VacationRequestDto vacationRequest)
+        public async Task<IActionResult> RequestVacation([FromBody] VacationRequestDTO vacationRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -111,6 +111,14 @@ namespace VacationPlanner.Controllers
             }
         }
 
-        
+        [HttpGet("getVacations")]
+        public async Task<IActionResult> GetVacations([FromQuery] int? statusId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            var userId = GetCurrentUserId();
+            var vacations = await _vacationService.GetVacationsAsync(userId,statusId, startDate, endDate);
+            return Ok(vacations);
+        }
+
+
     }
 }

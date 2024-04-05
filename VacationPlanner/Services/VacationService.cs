@@ -13,7 +13,7 @@
         Task AddVacationRequest(Vacation vacation);
         IEnumerable<VacationRequestDTO> GetRecentVacations(int userId);
         IEnumerable<VacationRequestDTO> GetAllVacationRequests();
-        Task<IEnumerable<VacationRequestDTO>> GetVacationsAsync(double userId,int? statusId, DateTime? startDate, DateTime? endDate);
+        Task<IEnumerable<VacationRequestDTO>> GetVacationsAsync(int userId,int? statusId, DateTime? startDate, DateTime? endDate);
     }
 
     public class VacationService : IVacationService
@@ -38,7 +38,7 @@
             return (IEnumerable<VacationRequestDTO>)_context.Vacations.ToList();
         }
 
-        public async Task<IEnumerable<VacationRequestDTO>> GetVacationsAsync(double userId, int? statusId, DateTime? startDate, DateTime? endDate)
+        public async Task<IEnumerable<VacationRequestDTO>> GetVacationsAsync(int userId, int? statusId, DateTime? startDate, DateTime? endDate)
         {
             
             
@@ -47,6 +47,7 @@
             {
                 throw new ArgumentException("User not found", nameof(userId));
             }
+
 
             var query = _context.Vacations.Where(v => v.UserId == userId);
 
